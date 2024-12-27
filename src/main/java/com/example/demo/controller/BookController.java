@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.BookDto;
+import com.example.demo.dto.BookSearchParametersDto;
 import com.example.demo.dto.CreateBookRequestDto;
 import com.example.demo.service.BookService;
 import java.util.List;
@@ -47,5 +48,10 @@ public class BookController {
     @PutMapping("/{id}")
     public BookDto update(@PathVariable Long id, @RequestBody CreateBookRequestDto bookDto) {
         return bookService.update(id, bookDto);
+    }
+
+    @PostMapping("/search")
+    public List<BookDto> search(@RequestBody BookSearchParametersDto searchParameters) {
+        return bookService.search(searchParameters);
     }
 }
