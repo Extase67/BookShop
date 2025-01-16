@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 07-insert-users
+      author: d.nosenko
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "1"
+              - column:
+                  name: email
+                  value: "admin@example.com"
+              - column:
+                  name: password
+                  value: "adminpassword"
+              - column:
+                  name: first_name
+                  value: "Admin"
+              - column:
+                  name: last_name
+                  value: "User"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "2"
+              - column:
+                  name: email
+                  value: "user@example.com"
+              - column:
+                  name: password
+                  value: "userpassword"
+              - column:
+                  name: first_name
+                  value: "Regular"
+              - column:
+                  name: last_name
+                  value: "User"
