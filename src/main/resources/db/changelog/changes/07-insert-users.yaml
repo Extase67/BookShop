@@ -14,7 +14,7 @@ databaseChangeLog:
                   value: "admin@example.com"
               - column:
                   name: password
-                  value: "adminpassword"
+                  value: "$2a$10$7QJ8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8"
               - column:
                   name: first_name
                   value: "Admin"
@@ -32,7 +32,7 @@ databaseChangeLog:
                   value: "user@example.com"
               - column:
                   name: password
-                  value: "userpassword"
+                  value: "$2a$10$7QJ8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8Q9J8"
               - column:
                   name: first_name
                   value: "Regular"
