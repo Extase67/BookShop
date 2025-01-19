@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 05-create-users_roles-table
+      author: d.nosenko
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            tableExists:
+              tableName: users_roles
+      changes:
+        - createTable:
+            tableName: users_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
