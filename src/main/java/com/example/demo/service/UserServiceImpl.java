@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.UserRegistrationRequestDto;
-import com.example.demo.dto.UserResponseDto;
+import com.example.demo.dto.user.UserRegistrationRequestDto;
+import com.example.demo.dto.user.UserResponseDto;
 import com.example.demo.exception.RegistrationException;
 import com.example.demo.mapper.UserMapper;
 import com.example.demo.model.User;
