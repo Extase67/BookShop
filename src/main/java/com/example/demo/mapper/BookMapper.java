@@ -8,7 +8,6 @@ import com.example.demo.model.Book;
 import com.example.demo.model.Category;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -29,7 +28,7 @@ public interface BookMapper {
     default List<String> map(Set<Category> categories) {
         return categories.stream()
                 .map(category -> String.valueOf(category.getId()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @AfterMapping
