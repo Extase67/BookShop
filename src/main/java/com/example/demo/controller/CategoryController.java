@@ -5,8 +5,10 @@ import com.example.demo.dto.category.CategoryDto;
 import com.example.demo.dto.category.CategoryRequestDto;
 import com.example.demo.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +32,7 @@ public class CategoryController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create category", description = "Create new category")
-    public CategoryDto createCategory(@RequestBody CategoryRequestDto categoryDto) {
+    public CategoryDto createCategory(@Valid @RequestBody CategoryRequestDto categoryDto) {
         return categoryService.save(categoryDto);
     }
 
@@ -54,7 +56,7 @@ public class CategoryController {
     @Operation(summary = "Update category by id",
             description = "Update category by id")
     public CategoryDto updateCategory(@PathVariable Long id,
-                                      @RequestBody CategoryRequestDto categoryDto) {
+                                      @Valid @RequestBody CategoryRequestDto categoryDto) {
         return categoryService.update(id, categoryDto);
     }
 
@@ -69,7 +71,7 @@ public class CategoryController {
 
     @GetMapping("/{id}/books")
     @Operation(summary = "Get books", description = "Get books by category id")
-    public List<BookDtoWithoutCategoryIds> getBooksByCategoryId(
+    public Page<BookDtoWithoutCategoryIds> getBooksByCategoryId(
             @PathVariable Long id, Pageable pageable) {
         return categoryService.getBooksByCategoryId(id, pageable);
     }

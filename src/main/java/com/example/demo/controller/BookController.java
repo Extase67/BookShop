@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BookController {
     private final BookService bookService;
 
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('USER')")
     @GetMapping
     @Operation(summary = "Get all books",
             description = "Get list of all books with pagination and sorting")
@@ -40,7 +40,7 @@ public class BookController {
         return bookService.findAll(pageable, sort);
     }
 
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     @Operation(summary = "Get book by id", description = "Get book by id")
     public BookDto findById(@PathVariable Long id) {
