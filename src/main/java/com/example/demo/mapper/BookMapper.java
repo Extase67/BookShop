@@ -25,9 +25,9 @@ public interface BookMapper {
 
     BookDtoWithoutCategoryIds toDtoWithoutCategories(Book book);
 
-    default List<String> map(Set<Category> categories) {
+    default List<Long> map(Set<Category> categories) {
         return categories.stream()
-                .map(category -> String.valueOf(category.getId()))
+                .map(Category::getId)
                 .toList();
     }
 
