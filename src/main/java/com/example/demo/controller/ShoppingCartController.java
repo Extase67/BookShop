@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.shoppingcart.CartItemRequestDto;
 import com.example.demo.dto.shoppingcart.ShoppingCartResponseDto;
 import com.example.demo.service.shoppingcart.ShoppingCartService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,14 +32,14 @@ public class ShoppingCartController {
     @ResponseStatus(HttpStatus.CREATED)
     public ShoppingCartResponseDto addBookToCart(
             @RequestParam Long userId,
-            @RequestBody CartItemRequestDto cartItemRequestDto) {
+            @Valid @RequestBody CartItemRequestDto cartItemRequestDto) {
         return shoppingCartService.addBookToCart(userId, cartItemRequestDto);
     }
 
     @PutMapping("/items/{cartItemId}")
     public ShoppingCartResponseDto updateCartItem(
             @PathVariable Long cartItemId,
-            @RequestBody CartItemRequestDto cartItemRequestDto) {
+            @Valid @RequestBody CartItemRequestDto cartItemRequestDto) {
         return shoppingCartService.updateCartItem(cartItemId, cartItemRequestDto.quantity());
     }
 

@@ -5,7 +5,6 @@ import com.example.demo.dto.shoppingcart.ShoppingCartResponseDto;
 import com.example.demo.exception.EntityNotFoundException;
 import com.example.demo.mapper.CartItemMapper;
 import com.example.demo.mapper.ShoppingCartMapper;
-import com.example.demo.model.Book;
 import com.example.demo.model.CartItem;
 import com.example.demo.model.ShoppingCart;
 import com.example.demo.repository.book.BookRepository;
@@ -37,13 +36,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Shopping cart not found for user id: " + userId));
-        Book book = bookRepository.findById(cartItemRequestDto.bookId())
+        bookRepository.findById(cartItemRequestDto.bookId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Book not found with id: " + cartItemRequestDto.bookId()));
 
         CartItem cartItem = cartItemMapper.toEntity(cartItemRequestDto);
-        cartItem.setShoppingCart(cart);
-        cartItem.setBook(book);
 
         cart.getCartItems().add(cartItem);
         shoppingCartRepository.save(cart);
