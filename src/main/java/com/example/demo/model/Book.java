@@ -10,6 +10,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -56,5 +57,5 @@ public class Book {
             inverseJoinColumns = @JoinColumn(name = "category_id"))
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Set<Category> categories;
+    private Set<Category> categories = new HashSet<>();
 }
