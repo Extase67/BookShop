@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/categories")
 @RequiredArgsConstructor
 public class CategoryController {
     private final CategoryService categoryService;
@@ -40,8 +40,8 @@ public class CategoryController {
     @GetMapping
     @Operation(summary = "Get all categories",
             description = "Get list of all categories with pagination and sorting")
-    public List<CategoryDto> findAll() {
-        return categoryService.findAll();
+    public List<CategoryDto> findAll(Pageable pageable) {
+        return categoryService.findAll(pageable);
     }
 
     @PreAuthorize("hasRole('USER')")

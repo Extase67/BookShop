@@ -30,8 +30,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryDto> findAll() {
-        return categoryRepository.findAll().stream()
+    public List<CategoryDto> findAll(Pageable pageable) {
+        return categoryRepository.findAll(pageable).stream()
                 .map(categoryMapper::toDto)
                 .toList();
     }
@@ -50,10 +50,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDto update(Long id, CategoryRequestDto requestDto) {
-        Category category = categoryMapper.toModel(requestDto);
-        category.setId(id);
-        return categoryMapper.toDto(categoryRepository.save(category));
+    public CategoryDto update(Long id, CategoryRequestDto categoryDto) {
+        Category category = categoryRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException("Can't find category by id " + id));
+        categoryMapper.updateCategoryFromDto(categoryDto, category);
+        categoryRepository.save(category);
+        return categoryMapper.toDto(category);
     }
 
     @Override
