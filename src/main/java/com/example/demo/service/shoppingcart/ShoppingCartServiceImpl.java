@@ -26,9 +26,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Override
     public ShoppingCartResponseDto getCartByUserId(Long userId) {
-        ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Shopping cart not found for user id: " + userId));
+        ShoppingCart cart = findShoppingCart(userId);
         return shoppingCartMapper.toDto(cart);
     }
 
@@ -36,9 +34,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Transactional
     public ShoppingCartResponseDto addBookToCart(
             Long userId, CartItemRequestDto cartItemRequestDto) {
-        ShoppingCart cart = shoppingCartRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Shopping cart not found for user id: " + userId));
+        ShoppingCart cart = findShoppingCart(userId);
         Book book = bookRepository.findById(cartItemRequestDto.bookId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Book not found with id: " + cartItemRequestDto.bookId()));

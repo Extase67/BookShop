@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 13-create-cart-item-table
+      id: 12-create-cart-item-table
       author: d.nosenko
       changes:
         - createTable:
