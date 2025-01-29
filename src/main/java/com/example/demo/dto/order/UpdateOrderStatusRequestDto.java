@@ -1,9 +1,9 @@
 package com.example.demo.dto.order;
 
 import com.example.demo.model.Order;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record UpdateOrderStatusRequestDto(
-        @NotBlank(message = "Status is required")
+        @NotNull(message = "Status is required")
         Order.Status status) {
 }

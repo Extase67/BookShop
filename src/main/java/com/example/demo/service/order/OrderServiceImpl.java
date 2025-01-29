@@ -16,6 +16,7 @@ import com.example.demo.model.User;
 import com.example.demo.repository.order.OrderItemRepository;
 import com.example.demo.repository.order.OrderRepository;
 import com.example.demo.repository.shoppingcart.ShoppingCartRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Override
+    @Transactional
     public OrderResponseDto placeOrder(User user, PlaceOrderRequestDto placeOrderRequestDto) {
         ShoppingCart shoppingCart = shoppingCartRepository
                 .findByUserId(user.getId())
