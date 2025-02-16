@@ -2,7 +2,6 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.book.BookDtoWithoutCategoryIds;
 import com.example.demo.dto.category.CategoryDto;
-import com.example.demo.dto.category.CategoryRequestDto;
 import com.example.demo.service.category.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -28,15 +27,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class CategoryController {
     private final CategoryService categoryService;
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create category", description = "Create new category")
-    public CategoryDto createCategory(@Valid @RequestBody CategoryRequestDto categoryDto) {
+    public CategoryDto createCategory(@Valid @RequestBody CategoryDto categoryDto) {
         return categoryService.save(categoryDto);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping
     @Operation(summary = "Get all categories",
             description = "Get list of all categories with pagination and sorting")
@@ -44,23 +43,23 @@ public class CategoryController {
         return categoryService.findAll(pageable);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/{id}")
     @Operation(summary = "Get category by id", description = "Get category by id")
     public CategoryDto getCategoryById(@PathVariable Long id) {
         return categoryService.getById(id);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{id}")
     @Operation(summary = "Update category by id",
             description = "Update category by id")
     public CategoryDto updateCategory(@PathVariable Long id,
-                                      @Valid @RequestBody CategoryRequestDto categoryDto) {
+                                      @Valid @RequestBody CategoryDto categoryDto) {
         return categoryService.update(id, categoryDto);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete category by id",
             description = "Delete category by id")

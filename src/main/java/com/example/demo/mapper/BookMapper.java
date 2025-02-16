@@ -6,45 +6,47 @@ import com.example.demo.dto.book.BookDtoWithoutCategoryIds;
 import com.example.demo.dto.book.CreateBookRequestDto;
 import com.example.demo.model.Book;
 import com.example.demo.model.Category;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(config = MapperConfig.class)
 public interface BookMapper {
-
+    @Mapping(target = "categories", ignore = true)
     BookDto toDto(Book book);
 
-    Book toModel(CreateBookRequestDto bookDto);
+    @Mapping(target = "categories", ignore = true)
+    Book toModel(CreateBookRequestDto requestDto);
 
     List<BookDto> toDtoList(List<Book> books);
 
-    void updateModelFromDto(@MappingTarget Book book, CreateBookRequestDto bookDto);
+    void updateBookFromDto(CreateBookRequestDto requestDto, @MappingTarget Book book);
 
     BookDtoWithoutCategoryIds toDtoWithoutCategories(Book book);
 
-    default List<Long> map(Set<Category> categories) {
-        return categories.stream()
-                .map(Category::getId)
-                .toList();
+    @AfterMapping
+    default void setCategory(CreateBookRequestDto requestDto, @MappingTarget Book book) {
+        book.setCategories(map(requestDto.getCategories()));
     }
 
     @AfterMapping
-    default void setCategoryIds(@MappingTarget BookDto bookDto, Book book) {
-        bookDto.setCategories(map(book.getCategories()));
+    default void setCategoriesIds(@MappingTarget BookDto bookDto, Book book) {
+        Set<Category> booksCategories = book.getCategories();
+        List<String> bookDtoCategories = new ArrayList<>();
+        for (Category c : booksCategories) {
+            bookDtoCategories.add(c.getName());
+        }
+        bookDto.setCategories(bookDtoCategories);
     }
 
-    @AfterMapping
-    default void setCategories(@MappingTarget Book book, CreateBookRequestDto bookDto) {
-        book.setCategories(bookDto.getCategoryIds().stream()
-                .map(id -> {
-                    Category category = new Category();
-                    category.setId(id);
-                    return category;
-                })
-                .collect(Collectors.toSet()));
+    default Set<Category> map(List<String> value) {
+        return value.stream()
+                .map(Category::new)
+                .collect(Collectors.toSet());
     }
 }

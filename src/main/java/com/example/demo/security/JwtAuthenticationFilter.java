@@ -1,5 +1,6 @@
 package com.example.demo.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,22 +23,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         String token = getToken(request);
-
-        boolean isTokenValid = jwtUtil.isValidToken(token);
-        if (token != null && isTokenValid) {
-            String username = jwtUtil.getUsernameFromToken(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
+        if (token != null && jwtUtil.isTokenValid(token)) {
+            Authentication authentication = null;
+            try {
+                String username = jwtUtil.getUserName(token);
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()
+                );
+            } catch (JwtException e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token JWT.");
+            }
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
         filterChain.doFilter(request, response);
     }
 
@@ -49,3 +51,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 }
+

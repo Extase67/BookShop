@@ -1,7 +1,8 @@
 package com.example.demo.security;
 
-import com.example.demo.exception.EntityNotFoundException;
+import com.example.demo.model.User;
 import com.example.demo.repository.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,10 +14,12 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
+    @Transactional
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email)
-                .orElseThrow(
-                        () -> new EntityNotFoundException("User not found with email: " + email));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Can't find user "
+                        + "by email: " + email));
+        return user;
     }
 }
