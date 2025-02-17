@@ -1,12 +1,14 @@
 package com.example.demo.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.demo.dto.book.BookDtoWithoutCategoryIds;
 import com.example.demo.dto.category.CategoryDto;
 import com.example.demo.repository.category.CategoryRepository;
 import com.example.demo.service.category.CategoryService;
@@ -20,7 +22,6 @@ import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,24 +94,26 @@ class CategoryControllerTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void createCategory_ValidRequestDto_Success() throws Exception {
         // given
-        CategoryDto expected = new CategoryDto()
+        CategoryDto requestDto = new CategoryDto()
                 .setName("Science")
                 .setDescription("Science books");
 
-        String jsonRequest = objectMapper.writeValueAsString(expected);
+        String jsonRequest = objectMapper.writeValueAsString(requestDto);
 
         // when
         MvcResult result = mockMvc.perform(post("/categories")
                         .content(jsonRequest)
-                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                )
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andReturn();
+
         // then
         CategoryDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 CategoryDto.class);
-        EqualsBuilder.reflectionEquals(expected, actual, "id");
+        assertNotNull(actual.getId());
+        assertEquals(requestDto.getName(), actual.getName());
+        assertEquals(requestDto.getDescription(), actual.getDescription());
     }
 
     @WithMockUser(username = "admin@mail.com", roles = {"ADMIN", "USER"})
@@ -143,8 +146,8 @@ class CategoryControllerTest {
         // then
         CategoryDto[] actual = objectMapper
                 .readValue(result.getResponse().getContentAsByteArray(), CategoryDto[].class);
-        Assertions.assertEquals(expected.size(), actual.length);
-        Assertions.assertEquals(expected, Arrays.stream(actual).toList());
+        assertEquals(expected.size(), actual.length);
+        assertEquals(expected, Arrays.stream(actual).toList());
     }
 
     @Test
@@ -164,12 +167,12 @@ class CategoryControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        BookDtoWithoutCategoryIds actual = objectMapper
+        CategoryDto actual = objectMapper
                 .readValue(result.getResponse().getContentAsString(),
-                        BookDtoWithoutCategoryIds.class);
+                        CategoryDto.class);
 
-        Assertions.assertNotNull(actual);
-        EqualsBuilder.reflectionEquals(expected, actual);
+        assertNotNull(actual);
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual));
     }
 
     @Test
@@ -202,7 +205,7 @@ class CategoryControllerTest {
         CategoryDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 CategoryDto.class);
-        EqualsBuilder.reflectionEquals(expected, actual);
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual));
     }
 
     @Test

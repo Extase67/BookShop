@@ -3,6 +3,10 @@ package com.example.demo.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import com.example.demo.dto.book.BookDto;
 import com.example.demo.dto.book.BookDtoWithoutCategoryIds;
@@ -20,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,24 +41,18 @@ class BookServiceTest {
 
     @Test
     void getById_WithNonExisingBook_ShouldThrowException() {
-        // Given
         Long bookId = 100L;
-        Mockito.when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
-        // When
-        Exception exception = assertThrows(
-                EntityNotFoundException.class,
-                () -> bookService.findBookById(bookId)
-        );
-        // Then
-        String expected = "Can't find book with id = " + bookId;
-        String actual = exception.getMessage();
-        assertEquals(expected, actual);
-        Mockito.verify(bookRepository, Mockito.times(1)).findById(bookId);
+        when(bookRepository.findById(bookId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> bookService.findBookById(bookId));
+
+        verify(bookRepository).findById(bookId);
+        verifyNoMoreInteractions(bookRepository);
+        verifyNoInteractions(bookMapper);
     }
 
     @Test
     void getById_WithValidBook_ShouldReturnBook() {
-        // Given
         Long bookId = 1L;
         Book book = new Book();
         book.setId(bookId);
@@ -70,22 +67,20 @@ class BookServiceTest {
                 .setAuthor(book.getAuthor())
                 .setPrice(book.getPrice());
 
-        Mockito.when(bookRepository.findById(Mockito.anyLong()))
-                .thenReturn(Optional.of(book));
-        Mockito.when(bookMapper.toDtoWithoutCategories(Mockito.any(Book.class)))
-                .thenReturn(expected);
-        // When
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
+        when(bookMapper.toDtoWithoutCategories(book)).thenReturn(expected);
+
         BookDtoWithoutCategoryIds actual = bookService.findBookById(bookId);
-        // Then
+
         assertNotNull(actual);
         assertEquals(expected, actual);
-        Mockito.verify(bookRepository, Mockito.times(1))
-                .findById(bookId);
+        verify(bookRepository).findById(bookId);
+        verify(bookMapper).toDtoWithoutCategories(book);
+        verifyNoMoreInteractions(bookRepository, bookMapper);
     }
 
     @Test
     void add_WithValidBookRequestDto_ShouldReturnBookDto() {
-        // Given
         CreateBookRequestDto requestDto = new CreateBookRequestDto()
                 .setTitle("Winnie the Pooh")
                 .setAuthor("A.A.Milne")
@@ -104,22 +99,21 @@ class BookServiceTest {
                 .setPrice(requestDto.getPrice())
                 .setCategories(requestDto.getCategories());
 
-        Mockito.when(bookMapper.toModel(requestDto)).thenReturn(book);
-        Mockito.when(bookMapper.toDto(book)).thenReturn(expected);
-        Mockito.when(bookRepository.save(Mockito.any(Book.class))).thenReturn(book);
+        when(bookMapper.toModel(requestDto)).thenReturn(book);
+        when(bookRepository.save(book)).thenReturn(book);
+        when(bookMapper.toDto(book)).thenReturn(expected);
 
-        // When
         BookDto actual = bookService.save(requestDto);
 
-        // Then
         assertEquals(expected, actual);
-        Mockito.verify(bookRepository, Mockito.times(1)).save(book);
-        Mockito.verifyNoMoreInteractions(bookRepository, bookMapper);
+        verify(bookMapper).toModel(requestDto);
+        verify(bookRepository).save(book);
+        verify(bookMapper).toDto(book);
+        verifyNoMoreInteractions(bookRepository, bookMapper);
     }
 
     @Test
-    public void findAll_ValidPageable_ReturnsAllBooks() {
-        // Given
+    void findAll_ValidPageable_ReturnsAllBooks() {
         Book book = new Book();
         book.setId(1L);
         book.setTitle("The Trial");
@@ -138,61 +132,101 @@ class BookServiceTest {
         List<Book> books = List.of(book);
         Page<Book> bookPage = new PageImpl<>(books, pageable, 5);
 
-        Mockito.when(bookRepository.findAll(pageable)).thenReturn(bookPage);
-        Mockito.when(bookMapper.toDto(book)).thenReturn(bookDto);
+        when(bookRepository.findAll(pageable)).thenReturn(bookPage);
+        when(bookMapper.toDto(book)).thenReturn(bookDto);
 
-        // When
         List<BookDto> actual = bookService.findAll(pageable);
 
-        // Then
-        assertEquals(1,actual.size());
-        assertEquals(bookDto,actual.get(0));
-
-        Mockito.verify(bookRepository, Mockito.times(1)).findAll(pageable);
-        Mockito.verify(bookMapper, Mockito.times(1)).toDto(book);
-        Mockito.verifyNoMoreInteractions(bookRepository, bookMapper);
+        assertEquals(1, actual.size());
+        assertEquals(bookDto, actual.get(0));
+        verify(bookRepository).findAll(pageable);
+        verify(bookMapper).toDto(book);
+        verifyNoMoreInteractions(bookRepository, bookMapper);
     }
 
     @Test
     void update_WithValidBookRequestDto_ShouldReturnBookDto() {
-        // Given
+        Long bookId = 3L;
         Book existingBook = new Book();
-        existingBook.setId(3L);
+        existingBook.setId(bookId);
         existingBook.setTitle("The Trial");
         existingBook.setAuthor("Franz Kafka");
         existingBook.setPrice(BigDecimal.valueOf(77.77));
         existingBook.setCategories(Set.of());
 
-        BigDecimal updatedPrice = BigDecimal.valueOf(88.88);
-
-        CreateBookRequestDto bookDtoToUpdate = new CreateBookRequestDto()
-                .setTitle(existingBook.getTitle())
-                .setAuthor(existingBook.getAuthor())
-                .setPrice(updatedPrice)
+        CreateBookRequestDto requestDto = new CreateBookRequestDto()
+                .setTitle("Updated Title")
+                .setAuthor("Updated Author")
+                .setPrice(BigDecimal.valueOf(88.88))
                 .setCategories(List.of());
 
-        BookDto expected = new BookDto()
-                .setTitle(bookDtoToUpdate.getTitle())
-                .setAuthor(bookDtoToUpdate.getAuthor())
-                .setPrice(bookDtoToUpdate.getPrice())
-                .setCategories(bookDtoToUpdate.getCategories());
+        Book updatedBook = new Book();
+        updatedBook.setId(bookId);
+        updatedBook.setTitle(requestDto.getTitle());
+        updatedBook.setAuthor(requestDto.getAuthor());
+        updatedBook.setPrice(requestDto.getPrice());
+        updatedBook.setCategories(existingBook.getCategories());
 
-        Mockito.when(bookRepository.findById(Mockito.any())).thenReturn(Optional.of(existingBook));
-        Mockito.when(bookRepository.save(Mockito.any(Book.class))).thenReturn(existingBook);
-        Mockito.when(bookMapper.toDto(Mockito.any(Book.class))).thenReturn(expected);
+        BookDto expected = new BookDto()
+                .setId(bookId)
+                .setTitle(requestDto.getTitle())
+                .setAuthor(requestDto.getAuthor())
+                .setPrice(requestDto.getPrice())
+                .setCategories(requestDto.getCategories());
+
+        when(bookRepository.findById(bookId)).thenReturn(Optional.of(existingBook));
+        when(bookRepository.save(existingBook)).thenReturn(updatedBook);
+        when(bookMapper.toDto(updatedBook)).thenReturn(expected);
+
+        BookDto actual = bookService.update(bookId, requestDto);
+
+        assertNotNull(actual);
+        assertEquals(expected, actual);
+        verify(bookRepository).findById(bookId);
+        verify(bookMapper).updateBookFromDto(requestDto, existingBook);
+        verify(bookRepository).save(existingBook);
+        verify(bookMapper).toDto(updatedBook);
+        verifyNoMoreInteractions(bookRepository, bookMapper);
+    }
+
+    @Test
+    void update_WithNullId_ShouldThrowException() {
+        Long bookId = null;
+        // Given
+        CreateBookRequestDto requestDto = new CreateBookRequestDto()
+                .setTitle("Test Book")
+                .setAuthor("Test Author")
+                .setPrice(BigDecimal.TEN);
 
         // When
-        BookDto actual = bookService.update(3L, bookDtoToUpdate);
+        Exception exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> bookService.update(bookId, requestDto)
+        );
 
         // Then
-        assertNotNull(actual);
-        assertEquals(updatedPrice, actual.getPrice());
+        assertEquals("Cannot find book by id: " + bookId, exception.getMessage());
+    }
 
-        Mockito.verify(bookRepository, Mockito.times(1))
-                .findById(Mockito.any());
-        Mockito.verify(bookRepository, Mockito.times(1))
-                .save(Mockito.any(Book.class));
-        Mockito.verify(bookMapper, Mockito.times(1))
-                .toDto(Mockito.any(Book.class));
+    @Test
+    void update_WithNegativeId_ShouldThrowException() {
+        Long invalidId = -1L;
+        CreateBookRequestDto requestDto = new CreateBookRequestDto()
+                .setTitle("Winnie the Pooh")
+                .setAuthor("A.A.Milne")
+                .setPrice(BigDecimal.valueOf(4.55))
+                .setCategories(List.of());
+
+        when(bookRepository.findById(invalidId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> bookService.update(invalidId, requestDto)
+        );
+
+        assertEquals("Cannot find book by id: " + invalidId, exception.getMessage());
+        verify(bookRepository).findById(invalidId);
+        verifyNoMoreInteractions(bookRepository);
+        verifyNoInteractions(bookMapper);
     }
 }

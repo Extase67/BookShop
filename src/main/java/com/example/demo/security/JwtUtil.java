@@ -8,11 +8,14 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.function.Function;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
+    private static final Logger logger = LogManager.getLogger(JwtUtil.class);
     private final Key secret;
 
     @Value("${jwt-expiration}")
@@ -26,8 +29,8 @@ public class JwtUtil {
     public String generateToken(String username) {
         Date currentTime = new Date(System.currentTimeMillis());
         Date expirationDate = new Date(System.currentTimeMillis() + expiration);
-        System.out.println("Current time is: " + currentTime);
-        System.out.println("Expiration time for token: " + expirationDate);
+        logger.debug("Generating token for user '{}'. Current time: {}, Expiration: {}",
+                username, currentTime, expirationDate);
 
         return Jwts.builder()
                 .setSubject(username)

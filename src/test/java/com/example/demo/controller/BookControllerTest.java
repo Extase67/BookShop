@@ -1,5 +1,8 @@
 package com.example.demo.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -18,12 +21,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -128,7 +129,7 @@ class BookControllerTest {
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 BookDto.class);
-        EqualsBuilder.reflectionEquals(expected, actual, "id");
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual, "id"));
     }
 
     @WithMockUser(username = "admin@mail.com", roles = {"ADMIN", "USER"})
@@ -176,8 +177,12 @@ class BookControllerTest {
         // then
         BookDto[] actual = objectMapper
                 .readValue(result.getResponse().getContentAsByteArray(), BookDto[].class);
-        Assertions.assertEquals(expected.size(), actual.length);
-        Assertions.assertEquals(expected, Arrays.asList(actual));
+        assertNotNull(actual);
+        assertEquals(expected.size(), actual.length);
+        for (int i = 0; i < expected.size(); i++) {
+            assertTrue(EqualsBuilder.reflectionEquals(expected.get(i), actual[i]),
+                    "Objects at index " + i + " are not equal");
+        }
     }
 
     @WithMockUser(username = "admin@mail.com", roles = {"ADMIN", "USER"})
@@ -201,17 +206,8 @@ class BookControllerTest {
         // then
         BookDto[] actual = objectMapper
                 .readValue(result.getResponse().getContentAsByteArray(), BookDto[].class);
-        Assertions.assertEquals(expected.size(), actual.length);
-        Assertions.assertEquals(expected, Arrays.stream(actual).toList());
-    }
-
-    @Test
-    void checkColumnType() {
-        String sql = "SELECT COLUMN_NAME, DATA_TYPE, NUMERIC_PRECISION, NUMERIC_SCALE "
-                + "FROM INFORMATION_SCHEMA.COLUMNS "
-                + "WHERE TABLE_NAME = 'books' AND COLUMN_NAME = 'price'";
-        Map<String, Object> columnInfo = jdbcTemplate.queryForMap(sql);
-        System.out.println(columnInfo);
+        assertEquals(expected.size(), actual.length);
+        assertEquals(expected, Arrays.stream(actual).toList());
     }
 
     @Test
@@ -238,7 +234,7 @@ class BookControllerTest {
                 .readValue(result.getResponse().getContentAsString(),
                         BookDtoWithoutCategoryIds.class);
 
-        Assertions.assertNotNull(actual);
+        assertNotNull(actual);
         EqualsBuilder.reflectionEquals(expected, actual);
     }
 
@@ -286,10 +282,7 @@ class BookControllerTest {
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 BookDto.class);
-        System.out.println("actual: ");
-        System.out.println(actual.toString());
-
-        EqualsBuilder.reflectionEquals(expected, actual);
+        assertTrue(EqualsBuilder.reflectionEquals(expected, actual));
     }
 
     @Test
