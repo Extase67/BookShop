@@ -12,14 +12,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.demo.dto.book.BookDto;
 import com.example.demo.dto.book.BookDtoWithoutCategoryIds;
 import com.example.demo.dto.book.CreateBookRequestDto;
-import com.example.demo.model.Category;
-import com.example.demo.repository.category.CategoryRepository;
+import com.example.demo.util.BookTestUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.sql.DataSource;
 import lombok.SneakyThrows;
@@ -32,13 +29,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -48,8 +45,6 @@ class BookControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @BeforeAll
     static void beforeAll(
@@ -67,11 +62,6 @@ class BookControllerTest {
                     new ClassPathResource("database/books/insert-books.sql")
             );
         }
-    }
-
-    @BeforeAll
-    static void beforeAll(@Autowired CategoryRepository categoryRepository) {
-        categoryRepository.save(new Category("Fantasy"));
     }
 
     @AfterAll
@@ -98,26 +88,9 @@ class BookControllerTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     void createBook_ValidRequestDto_Success() throws Exception {
         // given
-        CreateBookRequestDto createBookRequestDto = new CreateBookRequestDto()
-                .setAuthor("Joseph Heller")
-                .setPrice(BigDecimal.valueOf(15.99))
-                .setTitle("Catch-22")
-                .setIsbn("12324564789")
-                .setDescription("Great novel.")
-                .setCategories(List.of());
-
-        BookDto expected = new BookDto()
-                .setId(1L)
-                .setAuthor(createBookRequestDto.getAuthor())
-                .setPrice(createBookRequestDto.getPrice())
-                .setTitle(createBookRequestDto.getTitle())
-                .setIsbn(createBookRequestDto.getIsbn())
-                .setDescription(createBookRequestDto.getDescription())
-                .setCategories(createBookRequestDto.getCategories());
-
-        String jsonRequest = objectMapper.writeValueAsString(createBookRequestDto);
-        Category category = new Category("Fantasy");
-        category.setId(1L);
+        CreateBookRequestDto requestDto = BookTestUtil.createRequestDto();
+        BookDto expected = BookTestUtil.createBookDto();
+        String jsonRequest = objectMapper.writeValueAsString(requestDto);
 
         // when
         MvcResult result = mockMvc.perform(post("/api/books")
@@ -125,6 +98,7 @@ class BookControllerTest {
                         .content(jsonRequest))
                 .andExpect(status().isCreated())
                 .andReturn();
+
         // then
         BookDto actual = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
@@ -141,42 +115,20 @@ class BookControllerTest {
     @Test
     void getAll_GivenBooksInCatalog_ShouldReturnAllProducts() throws Exception {
         // given
-        List<BookDto> expected = new ArrayList<>();
-        expected.add(new BookDto().setId(1L)
-                .setAuthor("J.K.Rowling")
-                .setTitle("Harry Potter")
-                .setPrice(BigDecimal.valueOf(45.99))
-                .setDescription("Magic book.")
-                .setIsbn("123456789")
-                .setCategories(List.of()));
-
-        expected.add(new BookDto().setId(2L)
-                .setAuthor("Franz Kafka")
-                .setTitle("Castle")
-                .setPrice(BigDecimal.valueOf(19.99))
-                .setDescription("Great novel.")
-                .setIsbn("223456789")
-                .setCategories(List.of()));
-
-        expected.add(new BookDto().setId(3L)
-                .setAuthor("Franz Kafka")
-                .setTitle("The Trial")
-                .setPrice(BigDecimal.valueOf(7.99))
-                .setDescription("Great novel.")
-                .setIsbn("323456789")
-                .setCategories(List.of()));
+        List<BookDto> expected = BookTestUtil.createBookDtoList();
 
         // when
         MvcResult result = mockMvc.perform(
                         MockMvcRequestBuilders.get("/api/books")
-                                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                )
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andReturn();
 
         // then
-        BookDto[] actual = objectMapper
-                .readValue(result.getResponse().getContentAsByteArray(), BookDto[].class);
+        BookDto[] actual = objectMapper.readValue(
+                objectMapper.readTree(result.getResponse().getContentAsString())
+                        .get("content").toString(),
+                BookDto[].class);
         assertNotNull(actual);
         assertEquals(expected.size(), actual.length);
         for (int i = 0; i < expected.size(); i++) {
@@ -193,39 +145,32 @@ class BookControllerTest {
             executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     @Test
     void getAll_GivenEmptyCatalog_ShouldReturnEmptyList() throws Exception {
-        // given
-        List<BookDto> expected = new ArrayList<>();
         // when
         MvcResult result = mockMvc.perform(
                         MockMvcRequestBuilders.get("/api/books")
-                                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
-                )
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.content().json("{\"content\": []}"))
                 .andReturn();
 
         // then
-        BookDto[] actual = objectMapper
-                .readValue(result.getResponse().getContentAsByteArray(), BookDto[].class);
-        assertEquals(expected.size(), actual.length);
-        assertEquals(expected, Arrays.stream(actual).toList());
+        BookDto[] actual = objectMapper.readValue(
+                objectMapper.readTree(result.getResponse().getContentAsString())
+                        .get("content").toString(),
+                BookDto[].class);
+        assertEquals(0, actual.length);
     }
 
     @Test
     @WithMockUser(username = "admin@mail.com", roles = {"ADMIN", "USER"})
     void getBookById_GivenBooksInCatalog_ShouldReturnBook() throws Exception {
         // given
-        BookDtoWithoutCategoryIds expected = new BookDtoWithoutCategoryIds();
-        expected.setId(1L);
-        expected.setAuthor("JJ.K.Rowling");
-        expected.setTitle("Harry Potter");
-        expected.setPrice(BigDecimal.valueOf(45.99));
-        expected.setIsbn("1232456789");
-        expected.setDescription("Magic book.");
+        BookDtoWithoutCategoryIds expected = BookTestUtil.createBookDtoWithoutCategories();
 
         // when
         MvcResult result = mockMvc.perform(
                         MockMvcRequestBuilders.get("/api/books/1")
-                                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
                 .andReturn();
@@ -244,7 +189,7 @@ class BookControllerTest {
         // when
         mockMvc.perform(
                         MockMvcRequestBuilders.get("/api/books/-1")
-                                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isNotFound());
     }
@@ -252,25 +197,8 @@ class BookControllerTest {
     @Test
     @WithMockUser(username = "admin@mail.com", roles = {"ADMIN", "USER"})
     void update_CorrectCreateBookRequestDto_Success() throws Exception {
-        CreateBookRequestDto createBookRequestDto = new CreateBookRequestDto()
-                .setTitle("Castle")
-                .setAuthor("Franz Kafka")
-                .setPrice(BigDecimal.valueOf(40))
-                .setIsbn("123456333")
-                .setDescription("Great Novel.")
-                .setCategories(List.of());
-
-        BookDto expected = new BookDto()
-                .setId(2L)
-                .setPrice(createBookRequestDto.getPrice())
-                .setTitle(createBookRequestDto.getTitle())
-                .setAuthor(createBookRequestDto.getAuthor())
-                .setDescription(createBookRequestDto.getDescription())
-                .setIsbn(createBookRequestDto.getIsbn())
-                .setCategories(createBookRequestDto.getCategories());
-
+        BookDto expected = BookTestUtil.createUpdateBookDto();
         String jsonRequest = objectMapper.writeValueAsString(expected);
-
         // when
         MvcResult result = mockMvc.perform(put("/api/books/2")
                         .content(jsonRequest)

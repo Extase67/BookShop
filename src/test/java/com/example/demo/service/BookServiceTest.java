@@ -3,6 +3,7 @@ package com.example.demo.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -53,6 +54,7 @@ class BookServiceTest {
 
     @Test
     void getById_WithValidBook_ShouldReturnBook() {
+        // given
         Long bookId = 1L;
         Book book = new Book();
         book.setId(bookId);
@@ -67,11 +69,13 @@ class BookServiceTest {
                 .setAuthor(book.getAuthor())
                 .setPrice(book.getPrice());
 
-        when(bookRepository.findById(bookId)).thenReturn(Optional.of(book));
-        when(bookMapper.toDtoWithoutCategories(book)).thenReturn(expected);
+        given(bookRepository.findById(bookId)).willReturn(Optional.of(book));
+        given(bookMapper.toDtoWithoutCategories(book)).willReturn(expected);
 
+        // when
         BookDtoWithoutCategoryIds actual = bookService.findBookById(bookId);
 
+        // then
         assertNotNull(actual);
         assertEquals(expected, actual);
         verify(bookRepository).findById(bookId);
@@ -135,10 +139,10 @@ class BookServiceTest {
         when(bookRepository.findAll(pageable)).thenReturn(bookPage);
         when(bookMapper.toDto(book)).thenReturn(bookDto);
 
-        List<BookDto> actual = bookService.findAll(pageable);
+        Page<BookDto> actual = bookService.findAll(pageable);
 
-        assertEquals(1, actual.size());
-        assertEquals(bookDto, actual.get(0));
+        assertEquals(1, actual.getContent().size());
+        assertEquals(bookDto, actual.getContent().get(0));
         verify(bookRepository).findAll(pageable);
         verify(bookMapper).toDto(book);
         verifyNoMoreInteractions(bookRepository, bookMapper);

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface BookService {
-    List<BookDto> findAll(Pageable pageable);
+    Page<BookDto> findAll(Pageable pageable);
 
     BookDtoWithoutCategoryIds findBookById(Long id);
 
