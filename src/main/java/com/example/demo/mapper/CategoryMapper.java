@@ -2,7 +2,6 @@ package com.example.demo.mapper;
 
 import com.example.demo.config.MapperConfig;
 import com.example.demo.dto.category.CategoryDto;
-import com.example.demo.dto.category.CategoryRequestDto;
 import com.example.demo.model.Category;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -11,8 +10,8 @@ import org.mapstruct.MappingTarget;
 public interface CategoryMapper {
     CategoryDto toDto(Category category);
 
-    Category toModel(CategoryRequestDto categoryDto);
+    Category toModel(CategoryDto categoryDto);
 
-    void updateCategoryFromDto(CategoryRequestDto categoryRequestDto,
+    void updateCategoryFromDto(CategoryDto categoryDto,
                                @MappingTarget Category category);
 }
